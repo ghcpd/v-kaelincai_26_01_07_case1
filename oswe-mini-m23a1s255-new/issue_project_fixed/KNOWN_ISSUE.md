@@ -1,0 +1,1 @@
+(Copied from original) See ../issue_project/KNOWN_ISSUE.md for the original analysis. The root cause was using `set(data.columns)` which produced non-deterministic iteration order and led to flaky, threshold-sensitive behavior. The fixed implementation preserves deterministic column order.
