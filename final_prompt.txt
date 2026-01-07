@@ -1,0 +1,307 @@
+## Role & Objective
+
+You are a senior software engineer responsible for analyzing, fixing, and comprehensively validating a flaky behavior bug in a scientific data analysis platform. Your complete objective is to:
+
+1. **Create both the buggy and fixed project structures** in the specified workspace directory
+2. **Analyze and implement the deterministic fix** to eliminate non-deterministic test failures
+3. **Execute comprehensive validation** including environment setup, test execution, and verification
+4. **Verify deterministic behavior** through repeated test runs and consistency checks
+5. **Provide complete validation results** with explicit pass/fail statements
+
+## Inputs & Context
+
+**Source Material:**
+- FIX_PROMPT.md attachment containing complete bug analysis and requirements
+- Original buggy project specification with the following structure:
+  ```
+  issue_project/
+  ├── src/normalizer.py (contains the bug)
+  ├── tests/test_normalizer.py (flaky tests)
+  ├── data/ (sample JSON/CSV files)
+  ├── requirements.txt
+  ├── example_usage.py
+  ├── README.md
+  └── KNOWN_ISSUE.md
+  ```
+
+**Bug Description:**
+- The `DataNormalizer` class exhibits flaky behavior: identical inputs produce varying outputs
+- Tests randomly pass or fail due to non-deterministic behavior
+- Scores vary between runs (e.g., 6.87, 7.15, 7.23 for the same data)
+- Root cause: Python's unordered `set` data structure for dimension names causes non-deterministic iteration order
+- This affects floating-point calculation sequences and threshold-based logic decisions
+
+**Working Directory:** Create complete project structure under `<workspace>/grok-fast/` including both `issue_project/` (buggy) and `issue_project_fixed/` (fixed) directories
+
+## Step-by-Step Instructions
+
+### Phase 1: Create Both Original and Fixed Project Structures
+
+#### 1.1 Create Original Project (issue_project)
+1. Create directory structure:
+   ```
+   issue_project/
+   ├── src/
+   ├── tests/
+   ├── data/
+   ```
+2. Create `src/__init__.py` and `tests/__init__.py`
+3. Implement buggy `src/normalizer.py` with non-deterministic `set(dimensions)` iteration
+4. Create flaky `tests/test_normalizer.py` with tests marked as `@pytest.mark.flaky`
+5. Create sample data files in `data/`:
+   - sample_high_correlation.json
+   - sample_high_correlation.csv
+   - sample_low_correlation.json
+   - README.md
+6. Copy/create supporting files:
+   - requirements.txt (numpy, pandas, pytest)
+   - example_usage.py
+   - README.md
+   - KNOWN_ISSUE.md (describing the bug)
+
+#### 1.2 Create Fixed Project (issue_project_fixed)
+1. Create identical directory structure to issue_project:
+   ```
+   issue_project_fixed/
+   ├── src/
+   ├── tests/
+   ├── data/
+   ```
+2. Create `src/__init__.py` and `tests/__init__.py`
+3. Copy data files from issue_project to issue_project_fixed
+4. Copy supporting files (requirements.txt, example_usage.py, KNOWN_ISSUE.md)
+
+### Phase 2: Implement the Deterministic Fix
+
+#### 2.1 Fix src/normalizer.py
+1. **Replace nondeterministic set with sorted list:**
+   - Change: `self.dimensions = set(dimensions)`
+   - To: `self.dimensions = sorted(dimensions)`
+   - This ensures deterministic iteration order
+
+2. **Verify the fix:**
+   - All subsequent iterations over `self.dimensions` use sorted order
+   - Floating-point accumulation occurs in consistent order
+   - Threshold-based logic decisions produce deterministic results
+
+3. **Maintain API and Algorithm:**
+   - Keep all method signatures identical
+   - Preserve Z-score normalization logic
+   - Keep correlation calculation unchanged
+   - Maintain weighting strategy
+   - Ensure algorithm produces identical results for identical inputs
+
+#### 2.2 Update tests/test_normalizer.py
+1. Remove flaky test markers (`@pytest.mark.flaky`)
+2. Update assertions to expect deterministic behavior
+3. Add specific expected values (e.g., expected scores)
+4. Add consistency test that verifies identical input produces identical output
+5. Remove any assertions that relied on nondeterministic behavior
+
+### Phase 3: Create Documentation
+
+#### 3.1 Create FIX_SUMMARY.md
+Document:
+- What was changed: "Changed `self.dimensions = set(dimensions)` to `self.dimensions = sorted(dimensions)` in src/normalizer.py"
+- Why it fixes the issue: "Deterministic sorting ensures consistent iteration order, eliminating floating-point accumulation variability"
+- How to verify: "Run `pytest --count=20` to confirm all tests pass consistently"
+- Trade-offs: "Results are now sorted alphabetically instead of arbitrary; no functional impact on algorithm"
+
+#### 3.2 Create/Update README.md
+- Note this is the fixed version
+- Include test results proving consistency
+- Provide quick-start instructions
+
+### Phase 4: Environment Setup
+
+Execute the following setup commands:
+1. **Configure Python Environment:**
+   - Use Python 3.12.10 or compatible version
+   - Create virtual environment if needed
+
+2. **Install Dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   # Should install: numpy, pandas, pytest
+   ```
+
+### Phase 5: Full Validation Suite
+
+Execute all validation steps from the `issue_project_fixed` directory:
+
+#### 5.1 Launch System & Example Script
+```bash
+python example_usage.py
+```
+Expected: Script executes without errors and produces deterministic output
+
+#### 5.2 Single Test Run
+```bash
+pytest tests/ -v
+```
+Expected: All tests pass (e.g., "9 passed")
+
+#### 5.3 Consistency Validation - Specific Test (20 runs)
+```bash
+pytest tests/test_normalizer.py::TestDataNormalizer::test_process_data_consistent_score --count=20 -q
+```
+Expected: "20 passed" with 0 failures
+
+#### 5.4 Full Test Suite - Multiple Runs (10 iterations)
+```bash
+pytest tests/ --count=10 -q
+```
+Expected: "90 passed" (9 tests × 10 runs) with 0 failures
+
+#### 5.5 Verify Buggy Version Still Exhibits Flakiness (Optional)
+From the original `issue_project` directory:
+```bash
+pytest tests/test_normalizer.py::TestDataNormalizer::test_process_data_consistent_score --count=5 -v
+```
+Expected: Some test failures (demonstrates original flakiness)
+
+### Phase 6: Results Capture & Documentation
+
+1. **Capture all outputs:**
+   - Single test run results
+   - Consistency test (20 runs) results
+   - Full suite (10 runs) results
+   - Example script output
+   - Any warnings or errors
+
+2. **Document findings:**
+   - Test pass/fail counts
+   - Proof of deterministic behavior
+   - Performance metrics
+   - System stability notes
+
+3. **Provide final summary:**
+   - Explicit statement of whether all tests passed
+   - Confirmation of deterministic behavior
+   - Verification of expected functionality
+
+## Output Specification
+
+**Required Directory Structure:**
+
+```
+<workspace>/grok-fast/
+├── issue_project/                              # Original buggy project
+│   ├── src/
+│   │   ├── __init__.py
+│   │   └── normalizer.py                      # BUGGY: Uses set(dimensions)
+│   ├── tests/
+│   │   ├── __init__.py
+│   │   └── test_normalizer.py                 # Flaky tests
+│   ├── data/
+│   │   ├── sample_high_correlation.json
+│   │   ├── sample_high_correlation.csv
+│   │   ├── sample_low_correlation.json
+│   │   └── README.md
+│   ├── requirements.txt
+│   ├── example_usage.py
+│   ├── README.md
+│   └── KNOWN_ISSUE.md
+│
+└── issue_project_fixed/                        # Fixed version
+    ├── src/
+    │   ├── __init__.py
+    │   └── normalizer.py                      # FIXED: Uses sorted(dimensions)
+    ├── tests/
+    │   ├── __init__.py
+    │   └── test_normalizer.py                 # Deterministic tests
+    ├── data/
+    │   ├── sample_high_correlation.json      # Copied from original
+    │   ├── sample_high_correlation.csv       # Copied from original
+    │   ├── sample_low_correlation.json       # Copied from original
+    │   └── README.md                         # Copied from original
+    ├── requirements.txt                      # Copied from original
+    ├── example_usage.py                      # Copied from original
+    ├── README.md                             # UPDATED
+    ├── KNOWN_ISSUE.md                        # Copied from original
+    └── FIX_SUMMARY.md                        # NEW
+```
+
+**Required Test Results:**
+
+1. **Single Run:** All tests pass (e.g., "9 passed, 2 warnings")
+2. **Consistency Test (20 runs):** "20 passed" with 0 failures
+3. **Full Suite (10 runs):** "90 passed" (9 tests × 10 runs) with 0 failures
+4. **Example Script:** Produces identical deterministic output
+5. **Original Project Tests:** May show failures (demonstrates flakiness)
+
+## Constraints & Preferences
+
+**Mandatory Constraints:**
+- DO NOT modify files in the original `issue_project/` directory after creation
+- DO NOT change the business algorithm (Z-score normalization, correlation calculation, weighting)
+- DO NOT alter data files or data schema
+- DO NOT add heavy dependencies beyond numpy, pandas, pytest
+- Use Python 3.9+ compatible code
+- Follow existing code style conventions
+
+**Code Requirements:**
+- Replace nondeterministic `set` with deterministic `sorted()` list
+- Maintain identical public API
+- Preserve all original algorithm functionality
+- Ensure deterministic floating-point calculations
+
+**Testing Requirements:**
+- All assertions must be deterministic and repeatable
+- Tests must pass 100% consistently across all runs
+- Test coverage must match or exceed the original
+- No test should depend on Python's hash seed
+
+## Quality Gates & Verification
+
+### Success Criteria (All Required)
+✅ Both project structures created (issue_project and issue_project_fixed)  
+✅ Environment configured and dependencies installed successfully  
+✅ Example script launches without errors  
+✅ All tests pass on single run (e.g., 9 passed)  
+✅ Consistency test passes 20 consecutive times (20 passed)  
+✅ Full test suite passes 10 iterations (90 passed for 9 tests × 10 runs)  
+✅ Example script produces identical deterministic output  
+✅ FIX_SUMMARY.md documents the fix  
+✅ Original project remains unchanged  
+✅ No critical errors in any execution  
+
+### Validation Checklist
+- [ ] Both project directories created with correct structure
+- [ ] Dependencies installed without errors
+- [ ] Example script executes successfully
+- [ ] Single test run passes (0 failures)
+- [ ] Consistency test passes all 20 runs (0 failures)
+- [ ] Full suite passes all 10 iterations (0 failures)
+- [ ] Example output is deterministic
+- [ ] FIX_SUMMARY.md complete and accurate
+- [ ] README.md updated with fix details
+- [ ] All required files copied/created correctly
+
+## Execution Instructions
+
+Execute all steps in strict sequence:
+
+1. **Create original buggy project structure** (issue_project/) with all files
+2. **Create fixed project structure** (issue_project_fixed/) with identical structure
+3. **Copy data and supporting files** to fixed project
+4. **Implement the deterministic fix** in issue_project_fixed/src/normalizer.py
+5. **Update tests** in issue_project_fixed/tests/test_normalizer.py
+6. **Create FIX_SUMMARY.md** and update README.md
+7. **Configure Python environment** and install dependencies
+8. **Run example script** to verify system launches
+9. **Execute single test run** and capture results
+10. **Execute consistency test** (20 runs) and capture results
+11. **Execute full suite** (10 runs) and capture results
+12. **Capture and summarize** all validation results
+
+**Final Requirement:** Upon completion, provide comprehensive summary with:
+
+- **Explicit statement:** "ALL TEST CASES PASSED" or itemized failure details
+- **Test execution results:** Single run, consistency test (20 runs), full suite (10 runs)
+- **System verification:** Successful launch and deterministic behavior confirmation
+- **Functionality confirmation:** All expected features working correctly
+- **Consistency verification:** Same input produces identical output across all runs
+- **Documentation confirmation:** FIX_SUMMARY.md and README.md properly completed
+
+Do not ask for confirmation. Execute all steps immediately and provide complete validation results upon finish.
