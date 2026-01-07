@@ -1,0 +1,221 @@
+## Role & Objective
+
+You are a senior software engineer tasked with fixing a flaky behavior bug in a scientific data analysis platform and ensuring the fix is thoroughly validated. Your objectives are:
+
+1. **Create a complete fixed version** of a buggy data normalization project
+2. **Execute comprehensive validation** to ensure all tests pass consistently
+3. **Verify deterministic behavior** across multiple runs and scenarios
+4. **Document and summarize** all validation results
+
+## Inputs & Context
+
+**Source Material:**
+- Original buggy project directory: `issue_project/` containing:
+  - `src/normalizer.py` (contains non-deterministic behavior bug)
+  - `tests/test_normalizer.py` (flaky tests)
+  - `data/` folder with sample JSON/CSV files
+  - Supporting files: `requirements.txt`, `example_usage.py`, `README.md`, `KNOWN_ISSUE.md`
+
+**Bug Characteristics:**
+- `DataNormalizer` class produces non-deterministic outputs for identical inputs
+- Tests randomly pass or fail
+- Scores vary between runs (e.g., 6.87, 7.15, 7.23 for the same data)
+- Root cause: Unordered Python `set` data structure for storing dimension names causes non-deterministic iteration order
+- This affects floating-point calculation sequences and threshold-based logic decisions
+
+**Working Directory:** Create project structure under workspace directory `oswe-mini-prime-new`
+
+## Step-by-Step Instructions
+
+### Phase 1: Analyze & Plan
+1. Read FIX_PROMPT.md for complete context and requirements
+2. Examine the original `issue_project/` structure
+3. Study the buggy implementation in `src/normalizer.py`
+4. Review `KNOWN_ISSUE.md` for detailed bug analysis
+5. Understand the failing tests in `tests/test_normalizer.py`
+
+### Phase 2: Create Fixed Project Structure
+1. Create directory: `<workspace>/oswe-mini-prime-new/issue_project_fixed/`
+2. Create subdirectories:
+   - `src/`
+   - `tests/`
+   - `data/`
+3. Copy all data files from `issue_project/data/` to the new project
+4. Copy `requirements.txt`, `example_usage.py`, and README.md
+
+### Phase 3: Implement the Fix
+1. **Fix the root cause** in `src/normalizer.py`:
+   - Replace unordered `set` iteration with deterministic ordered iteration (e.g., `sorted(list(data.columns))`)
+   - Use stable summation/vectorized operations for consistent floating-point sequences
+   - Eliminate order-dependent threshold logic
+
+2. **Maintain all business logic:**
+   - Z-score normalization algorithm unchanged
+   - Correlation calculation methodology preserved
+   - Weighting strategy identical
+   - API and interface preserved
+
+3. **Update tests:**
+   - Copy and update `tests/test_normalizer.py` with deterministic assertions
+   - Add `tests/conftest.py` if needed for test infrastructure
+   - Ensure tests verify identical inputs produce identical outputs
+
+### Phase 4: Full Validation Suite
+Execute comprehensive validation with the following commands from the fixed project directory:
+
+1. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. **Single test run:**
+   ```bash
+   pytest test_normalizer.py -q
+   ```
+
+3. **Repeated runs (20+ iterations):**
+   ```bash
+   pytest test_normalizer.py -q --count=20
+   ```
+
+4. **Example script validation:**
+   ```bash
+   python example_usage.py
+   ```
+
+5. **Determinism validation with different PYTHONHASHSEED values:**
+   ```bash
+   # With PYTHONHASHSEED=0
+   $env:PYTHONHASHSEED='0'
+   pytest tests/test_normalizer.py -q --count=5
+   
+   # With PYTHONHASHSEED=12345
+   $env:PYTHONHASHSEED='12345'
+   pytest tests/test_normalizer.py -q --count=5
+   ```
+
+### Phase 5: Documentation
+1. Create `FIX_SUMMARY.md` explaining:
+   - What was changed (specific files/lines)
+   - Why the change fixes the issue
+   - Verification steps and results
+   - Any trade-offs or considerations
+
+2. Update `README.md` to:
+   - Note this is the fixed version
+   - Include test results proving consistency
+   - Provide updated quick-start instructions
+
+3. Copy `KNOWN_ISSUE.md` to preserve original issue description
+
+## Output Specification
+
+**Final Directory Structure:**
+
+```
+oswe-mini-prime-new/
+└── issue_project_fixed/
+    ├── src/
+    │   ├── __init__.py
+    │   └── normalizer.py                  # FIXED implementation
+    ├── tests/
+    │   ├── __init__.py
+    │   ├── test_normalizer.py             # UPDATED tests
+    │   └── conftest.py                    # Test configuration (if needed)
+    ├── data/
+    │   ├── sample_high_correlation.json
+    │   ├── sample_high_correlation.csv
+    │   ├── sample_low_correlation.json
+    │   └── README.md
+    ├── requirements.txt                   # Copied from original
+    ├── example_usage.py                   # Copied from original
+    ├── README.md                          # Updated with fix details
+    ├── KNOWN_ISSUE.md                     # Copied from original
+    └── FIX_SUMMARY.md                     # NEW: Explains the fix
+```
+
+**Required Validation Results:**
+
+1. **Single test run:** All tests pass (0 failures)
+2. **Repeated runs:** `pytest --count=20` yields all tests passing (e.g., 180 passed for 9 tests × 20 runs)
+3. **Example script:** Produces identical deterministic output on each execution
+4. **PYTHONHASHSEED variations:** Tests pass consistently with different hash seed values
+5. **No errors:** All validations complete without errors or critical warnings
+
+## Constraints & Preferences
+
+**Mandatory Constraints:**
+- DO NOT modify the original `issue_project/` directory
+- DO NOT change the business algorithm (Z-score normalization, correlation calculation, weighting)
+- DO NOT alter data files or data schema
+- DO NOT add heavy external dependencies
+- Use Python 3.9+ compatible code
+- Follow existing code style and conventions
+
+**Code Standards:**
+- Replace nondeterministic `set` iteration with deterministic ordering
+- Use stable arithmetic operations for floating-point calculations
+- Maintain clear variable and function names
+- Include appropriate docstrings
+
+**Testing Standards:**
+- All assertions must be deterministic
+- Tests must be repeatable and consistent
+- Test coverage should match or exceed the original
+- No test should depend on execution order or timing
+
+## Quality Gates & Validation Results
+
+### Success Criteria (All Required)
+✅ All tests pass on single run (0 failures)  
+✅ All tests pass on 20 repeated runs (e.g., 180/180 passed)  
+✅ Example script produces deterministic output across runs (e.g., score = 7.5000 consistently)  
+✅ Tests pass with PYTHONHASHSEED=0 (minimum 5 runs)  
+✅ Tests pass with PYTHONHASHSEED=12345 (minimum 5 runs)  
+✅ FIX_SUMMARY.md clearly explains all changes  
+✅ Original `issue_project/` remains completely unchanged  
+
+### Validation Checklist
+- [ ] Single pytest run: all tests pass
+- [ ] Repeated pytest runs (20+): 100% pass rate
+- [ ] Example script: deterministic output verified
+- [ ] PYTHONHASHSEED tests: consistent pass rates
+- [ ] No errors or critical warnings in output
+- [ ] All required documentation created/updated
+- [ ] Project structure complete and correct
+
+## Validation Output Requirements
+
+After completing the full validation suite, capture and summarize:
+
+1. **Test Execution Summary**
+   - Output from single test run
+   - Output from repeated runs (--count=20)
+   - Pass/fail counts and statistics
+
+2. **Determinism Verification**
+   - Confirmation that example script output is identical across runs
+   - PYTHONHASHSEED validation results
+
+3. **Error & Warning Log**
+   - Any errors encountered
+   - Non-critical warnings (note if present)
+   - Traces if failures occur
+
+4. **Final Conclusion**
+   - Explicit statement: "All test cases PASSED" or details of any failures
+   - Confirmation project meets expected functionality
+   - Verification of consistent behavior across all test scenarios
+
+## Final Execution Notes
+
+Execute all steps in sequence without asking for confirmation:
+
+1. Create the complete fixed project structure
+2. Implement the deterministic fix in normalizer.py
+3. Update and verify tests
+4. Run the complete validation suite as specified
+5. Capture all outputs and results
+6. Provide final summary with explicit pass/fail status
+
+Proceed immediately with implementation and full validation. Do not stop until all phases are complete.
