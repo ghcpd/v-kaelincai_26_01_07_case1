@@ -1,0 +1,160 @@
+## Role & Objective
+
+You are a senior software engineer specializing in fixing flaky behavior bugs in scientific data analysis platforms. Your task is to:
+
+1. **Analyze and fix** a non-deterministic bug in a data normalization system
+2. **Create a complete fixed version** of the project that passes all tests consistently
+3. **Validate and document** all changes with comprehensive testing and verification
+
+## Inputs & Context
+
+**Source Material:**
+- Original buggy project directory: `issue_project/` containing:
+  - `src/normalizer.py` (buggy implementation)
+  - `tests/test_normalizer.py` (flaky tests)
+  - `data/` folder with sample JSON/CSV files
+  - `requirements.txt`, `example_usage.py`, `README.md`, `KNOWN_ISSUE.md`
+
+**Bug Characteristics:**
+- The `DataNormalizer` class produces non-deterministic outputs for identical inputs
+- Tests randomly pass or fail due to non-deterministic behavior
+- Scores vary between runs (e.g., 6.87, 7.15, 7.23 for the same data)
+- Root cause: Use of unordered Python `set` data structure for storing dimension names, causing non-deterministic iteration order
+
+## Step-by-Step Instructions
+
+### Phase 1: Preparation & Analysis
+1. Read and analyze the FIX_PROMPT.md document for complete context about the bug and requirements
+2. Examine the original project structure in `issue_project/`
+3. Study the buggy implementation in `src/normalizer.py`
+4. Review `KNOWN_ISSUE.md` for detailed bug analysis
+5. Understand the flaky tests in `tests/test_normalizer.py`
+
+### Phase 2: Create Fixed Project Structure
+1. Create a new directory named `issue_project_fixed/` in the workspace
+2. Create the following subdirectories:
+   - `issue_project_fixed/src/`
+   - `issue_project_fixed/tests/`
+   - `issue_project_fixed/data/`
+3. Copy all data files from `issue_project/data/` to `issue_project_fixed/data/`
+4. Copy `requirements.txt`, `example_usage.py`, and `README.md` to `issue_project_fixed/`
+
+### Phase 3: Implement the Fix
+1. **Fix the root cause** in `normalizer.py`:
+   - Replace unordered `set` iteration with deterministic ordered iteration using `list()`
+   - Use vectorized operations for calculations to ensure consistent floating-point sequences
+   - Eliminate any order-dependent logic in threshold decisions
+
+2. **Maintain all business logic:**
+   - Z-score normalization algorithm must remain unchanged
+   - Correlation calculation methodology must be preserved
+   - Weighting strategy must remain the same
+   - API and interface must be identical
+
+3. **Create test infrastructure:**
+   - Copy and update `tests/test_normalizer.py` with deterministic assertions
+   - Add `tests/conftest.py` to configure test imports if needed
+   - Ensure tests verify that identical inputs produce identical outputs
+
+### Phase 4: Validation & Testing
+1. Install dependencies: `pip install -r requirements.txt`
+2. Run single test pass: `pytest -q`
+3. Run repeated tests (20 iterations minimum): `pytest -q --count=20`
+4. Run example script: `python example_usage.py`
+5. Verify that:
+   - All tests pass consistently (100% success rate across all runs)
+   - Example script produces deterministic output (e.g., score = 7.500000)
+   - No errors or tracebacks occur
+
+### Phase 5: Documentation
+1. Create `FIX_SUMMARY.md` containing:
+   - Detailed explanation of what was changed (specific files/lines)
+   - Root cause analysis and why the fix resolves the issue
+   - Step-by-step verification instructions
+   - Trade-offs or performance considerations (if any)
+
+2. Update `README.md` to:
+   - Clearly indicate this is the fixed version
+   - Include test results demonstrating consistency
+   - Provide updated quick-start instructions
+
+3. Copy `KNOWN_ISSUE.md` as-is to preserve the original issue description
+
+## Output Specification
+
+**Final Deliverable Structure:**
+
+```
+issue_project_fixed/
+├── src/
+│   ├── __init__.py
+│   └── normalizer.py                    # FIXED implementation
+├── tests/
+│   ├── __init__.py
+│   ├── test_normalizer.py               # UPDATED tests
+│   └── conftest.py                      # Test configuration (if needed)
+├── data/
+│   ├── sample_high_correlation.json
+│   ├── sample_high_correlation.csv
+│   ├── sample_low_correlation.json
+│   └── README.md
+├── requirements.txt                     # Copied from original
+├── example_usage.py                     # Copied from original
+├── README.md                            # Updated with fix details
+├── KNOWN_ISSUE.md                       # Copied from original
+└── FIX_SUMMARY.md                       # NEW file explaining the fix
+```
+
+**Test Results Required:**
+- Single run: `pytest -q` → All tests pass with 0 failures
+- Multiple runs: `pytest -q --count=20` → 160 tests pass with 0 failures across all iterations
+- Example script: Deterministic output verified (same score on each run)
+
+## Constraints & Preferences
+
+**Mandatory Constraints:**
+- DO NOT modify files in the original `issue_project/` directory
+- DO NOT change the business algorithm (Z-score normalization, correlation calculation, weighting)
+- DO NOT alter data files or data schema
+- DO NOT add heavy external dependencies beyond what's in `requirements.txt`
+- Use Python 3.9+ compatible code
+
+**Code Standards:**
+- Follow existing code style and conventions
+- Maintain clear, readable variable and function names
+- Include docstrings where appropriate
+- No performance optimization beyond fixing the bug is required
+
+**Testing Standards:**
+- Tests must be repeatable and consistent
+- All assertions must be deterministic
+- Test coverage should match or exceed the original
+- No tests should depend on execution order or timing
+
+## Quality Gates & Verification
+
+### Success Criteria (All Required)
+✅ All tests in `issue_project_fixed/` pass consistently across minimum 20 repeated runs  
+✅ `pytest tests/test_normalizer.py -v --count=20` reports 160 passed with 0 failures  
+✅ Same input data always produces identical numerical output (e.g., score = 7.500000)  
+✅ `FIX_SUMMARY.md` clearly explains the bug location, fix mechanism, and verification steps  
+✅ Original `issue_project/` directory remains completely unchanged  
+✅ Example script executes without errors and produces deterministic results  
+
+### Verification Checklist
+- [ ] Test single run produces consistent results
+- [ ] Test 20 repeated runs show 100% pass rate
+- [ ] Score values are identical across multiple executions
+- [ ] No warnings or errors in test output (ignore non-blocking deprecation warnings)
+- [ ] Documentation files complete and accurate
+- [ ] Project structure matches required output specification
+
+## Final Execution Notes
+
+Once implementation is complete, provide:
+1. **Test Execution Summary** — Full output from `pytest -q --count=20`
+2. **Verification Results** — Proof that all tests pass consistently
+3. **Example Output** — Deterministic results from `python example_usage.py`
+4. **Change Summary** — Brief overview of what was modified and why
+
+Execute all steps in sequence without asking for confirmation. Proceed with full implementation and validation immediately.
