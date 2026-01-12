@@ -1,0 +1,327 @@
+## Role & Objective
+
+You are a senior software engineer responsible for completely fixing a flaky behavior bug in a scientific data analysis platform and executing comprehensive validation. Your complete objective is to:
+
+1. **Analyze the buggy project** to understand the non-deterministic behavior and root cause
+2. **Create a complete fixed version** with corrected source code, updated tests, and documentation
+3. **Execute comprehensive validation** including environment setup, dependency installation, and test execution
+4. **Verify deterministic behavior** through multiple test runs and stress testing
+5. **Provide complete validation results** with explicit pass/fail statements and quality metrics
+
+## Inputs & Context
+
+**Source Material:**
+- FIX_PROMPT.md attachment containing complete bug specification
+- Original buggy project structure in `issue_project/` with:
+  - `src/normalizer.py` (contains non-deterministic bug using `set()`)
+  - `tests/test_normalizer.py` (flaky tests marked with `@pytest.mark.flaky`)
+  - `data/` folder with sample files (sample_high_correlation.json, sample_high_correlation.csv, sample_low_correlation.json)
+  - Supporting files: `requirements.txt`, `example_usage.py`, `README.md`, `KNOWN_ISSUE.md`
+
+**Bug Description:**
+- The `DataNormalizer` class exhibits non-deterministic behavior: identical inputs produce varying outputs
+- Tests randomly pass or fail (40-60% failure rate mentioned)
+- Scores vary between runs (e.g., 6.87, 7.15, 7.23 for the same data)
+- Root cause: Python's unordered `set()` data structure for dimension names causes non-deterministic iteration order
+- This affects floating-point calculation sequences and threshold-based logic decisions (particularly around 0.85 correlation threshold)
+
+**Working Directory:** Create complete fixed project structure under `<workspace>/Claude-haiku-4.5/issue_project_fixed/`
+
+## Step-by-Step Instructions
+
+### Phase 1: Analyze the Buggy Project
+
+1. Read and understand KNOWN_ISSUE.md for detailed bug analysis
+2. Examine the original normalizer.py to locate the problematic `set(dimensions)` usage
+3. Review the test file to understand expected behavior
+4. Identify all data files and configuration requirements
+5. Understand the algorithm: Z-score normalization, correlation calculation, weighting strategy, and threshold logic
+
+### Phase 2: Create Fixed Project Structure
+
+1. Create directory structure:
+   ```
+   issue_project_fixed/
+   ├── src/
+   ├── tests/
+   └── data/
+   ```
+
+2. Create package files:
+   - `src/__init__.py`
+   - `tests/__init__.py`
+
+3. Copy data files from original to fixed project:
+   - sample_high_correlation.json
+   - sample_high_correlation.csv
+   - sample_low_correlation.json
+   - README.md
+
+4. Copy supporting files:
+   - requirements.txt
+   - example_usage.py
+   - KNOWN_ISSUE.md
+
+### Phase 3: Implement the Deterministic Fix
+
+1. **Fix src/normalizer.py:**
+   - Replace `self.dimensions = set(dimensions)` with `self.dimensions = sorted(dimensions)`
+   - This single-line change ensures deterministic iteration order across all methods
+   - Eliminates non-deterministic floating-point accumulation
+   - Ensures threshold-based logic produces consistent results
+
+2. **Verify API preservation:**
+   - All method signatures remain identical
+   - Public API unchanged
+   - Business logic preserved (Z-score normalization, correlation calculation, weighting)
+   - Algorithm produces identical results for identical inputs
+
+3. **Create updated tests in test_normalizer.py:**
+   - Remove `@pytest.mark.flaky` decorators
+   - Update assertions to expect deterministic behavior
+   - Add specific expected values (e.g., score = 7.5 for test data)
+   - Include consistency tests verifying identical input produces identical output
+   - Organize tests into logical test classes (e.g., TestDataNormalizer, TestEdgeCases, TestDeterministicBehavior)
+
+### Phase 4: Create Documentation
+
+1. **Create FIX_SUMMARY.md containing:**
+   - What was changed: "Replaced `set(dimensions)` with `sorted(dimensions)`"
+   - Why it fixes the issue: "Deterministic sorting ensures consistent iteration order"
+   - How to verify: "Run tests with --count=20 to confirm consistency"
+   - Trade-offs: "Results now sorted alphabetically; no functional impact"
+
+2. **Create/Update README.md:**
+   - Note this is the FIXED version
+   - Include test results proving consistency
+   - Provide quick-start instructions
+
+3. **Create PROJECT_SUMMARY.md:**
+   - Complete overview of the fix
+   - Project status and deliverables
+
+### Phase 5: Environment Setup
+
+1. **Configure Python environment:**
+   - Use Python 3.12.10 or compatible version
+   - Create virtual environment if needed
+
+2. **Install dependencies:**
+   ```bash
+   pip install numpy>=1.21.0 pandas>=1.3.0 pytest>=7.0.0 pytest-repeat>=0.9.1
+   ```
+
+### Phase 6: Full Validation Suite
+
+Execute all validation tests from the `issue_project_fixed` directory:
+
+#### 6.1 Basic Test Run
+```bash
+pytest tests/test_normalizer.py -v
+```
+Expected: All tests pass (e.g., "11 passed")
+Capture: Verbose output showing all test results
+
+#### 6.2 Example Script Execution
+```bash
+python example_usage.py
+```
+Expected: Script executes without errors and produces deterministic output
+Verify: Output consistency across multiple runs (minimum 3 times)
+
+#### 6.3 Consistency Test (10 runs)
+```bash
+pytest tests/test_normalizer.py --count=10 -q
+```
+Expected: "110 passed" (11 tests × 10 runs) with 0 failures
+
+#### 6.4 Stress Test (50 runs)
+```bash
+pytest tests/test_normalizer.py --count=50 -q
+```
+Expected: "550 passed" (11 tests × 50 runs) with 0 failures
+
+#### 6.5 Category-Specific Tests
+Run each test category individually:
+```bash
+pytest tests/test_normalizer.py::TestDataNormalizer -v
+pytest tests/test_normalizer.py::TestEdgeCases -v
+pytest tests/test_normalizer.py::TestDeterministicBehavior -v
+```
+Expected: All categories pass with 100% success rate
+
+#### 6.6 Module Verification
+```bash
+python -c "import src.normalizer; print('✓ Module imports successfully')"
+```
+Expected: Module loads without errors
+
+#### 6.7 Source Code Verification
+Verify the fix is in place:
+```bash
+grep "sorted" src/normalizer.py
+```
+Expected: Find the `sorted()` call used for dimensions
+
+### Phase 7: Results Capture & Validation Report
+
+1. **Capture all outputs:**
+   - Single test run results with verbose output
+   - Consistency test (10 runs) results
+   - Stress test (50 runs) results
+   - Example script output from multiple executions
+   - Category-specific test results
+   - Module import verification output
+
+2. **Generate validation documents:**
+   - VALIDATION_REPORT.md - Complete test results and metrics
+   - VALIDATION_SUMMARY.md - Executive summary of validation
+   - VALIDATION_OUTPUT_LOG.md - Raw terminal output logs
+   - FINAL_VALIDATION_REPORT.md - Consolidated report
+   - TEST_RESULTS_PASS_FAIL_STATUS.md - Explicit pass/fail statements
+
+3. **Document findings:**
+   - Total test count and pass count
+   - Pass rate percentage
+   - Proof of deterministic behavior
+   - Performance metrics
+   - Zero errors/exceptions/warnings confirmation
+
+4. **Provide final summary:**
+   - Explicit statement: "ALL TEST CASES PASSED" with total count
+   - Confirmation of system functionality
+   - Verification of consistent behavior
+   - Production readiness assessment
+
+## Output Specification
+
+**Required Directory Structure:**
+
+```
+<workspace>/Claude-haiku-4.5/
+├── issue_project_fixed/
+│   ├── src/
+│   │   ├── __init__.py
+│   │   └── normalizer.py              # FIXED: sorted(dimensions)
+│   ├── tests/
+│   │   ├── __init__.py
+│   │   └── test_normalizer.py         # UPDATED: deterministic tests
+│   ├── data/
+│   │   ├── sample_high_correlation.json
+│   │   ├── sample_high_correlation.csv
+│   │   ├── sample_low_correlation.json
+│   │   └── README.md
+│   ├── requirements.txt               # Copied from original
+│   ├── example_usage.py               # Copied from original
+│   ├── README.md                      # UPDATED/CREATED
+│   ├── KNOWN_ISSUE.md                 # Copied from original
+│   ├── FIX_SUMMARY.md                 # NEW: Detailed fix explanation
+│   ├── PROJECT_SUMMARY.md             # NEW: Project completion overview
+│   └── VALIDATION_REPORT.md           # NEW: Validation metrics
+│
+├── VALIDATION_SUMMARY.md              # NEW: Executive summary
+├── VALIDATION_OUTPUT_LOG.md           # NEW: Raw output logs
+├── FINAL_VALIDATION_REPORT.md         # NEW: Consolidated report
+├── TEST_RESULTS_PASS_FAIL_STATUS.md   # NEW: Pass/fail statements
+└── [Other validation documents]
+```
+
+**Required Test Results:**
+
+1. **Single Run:** All tests pass (e.g., "11/11 passed, 0 failed")
+2. **Consistency (10 runs):** "110/110 passed, 0 failed"
+3. **Stress (50 runs):** "550/550 passed, 0 failed"
+4. **Total:** Minimum 671 tests passed (11 + 110 + 550)
+5. **Pass Rate:** 100%
+6. **Errors/Exceptions:** 0
+7. **Warnings:** 0 (or only non-blocking deprecation warnings)
+
+## Constraints & Preferences
+
+**Mandatory Constraints:**
+- DO NOT modify the original `issue_project/` directory
+- DO NOT change the business algorithm (Z-score normalization, correlation calculation, weighting, thresholds)
+- DO NOT alter data files or data schema
+- DO NOT add heavy external dependencies beyond numpy, pandas, pytest, pytest-repeat
+- Use Python 3.9+ compatible code
+- Follow existing code style conventions
+
+**Code Requirements:**
+- Single-line fix: replace `set(dimensions)` with `sorted(dimensions)`
+- Maintain identical public API
+- Preserve all original algorithm functionality
+- Ensure bit-perfect reproducible results
+
+**Testing Requirements:**
+- All assertions must be deterministic and repeatable
+- Tests must pass 100% consistently across all runs
+- Test coverage must match or exceed the original
+- No test should depend on Python's hash seed
+- Include tests for all test categories
+
+## Quality Gates & Verification
+
+### Success Criteria (All Required)
+✅ Complete fixed project structure created  
+✅ Environment configured successfully (Python 3.12.10, virtual environment)  
+✅ All dependencies installed without errors  
+✅ Single test run: all tests pass (11/11)  
+✅ Consistency test (10 runs): 110/110 pass  
+✅ Stress test (50 runs): 550/550 pass  
+✅ Total: 671+ test passes with 0 failures  
+✅ Pass rate: 100%  
+✅ Example script executes without errors  
+✅ Deterministic behavior verified (identical output across multiple runs)  
+✅ Source code contains the fix (sorted() usage)  
+✅ Module imports successfully  
+✅ All documentation created (FIX_SUMMARY.md, VALIDATION_REPORT.md, etc.)  
+✅ Validation reports generated and complete  
+
+### Validation Checklist
+- [ ] Fixed project structure created with correct directory layout
+- [ ] Environment configured and virtual environment created
+- [ ] All dependencies installed (numpy, pandas, pytest, pytest-repeat)
+- [ ] Source code fix implemented and verified (sorted instead of set)
+- [ ] Tests updated and pass on single run (11/11)
+- [ ] Consistency test passes (10 runs = 110/110)
+- [ ] Stress test passes (50 runs = 550/550)
+- [ ] Example script executes successfully and produces deterministic output
+- [ ] Module imports without errors
+- [ ] All validation documents created
+- [ ] Final pass/fail status explicitly documented
+- [ ] Zero errors, exceptions, and warnings confirmed
+
+## Execution Instructions
+
+Execute all steps in strict sequence:
+
+1. **Analyze the buggy project** and understand the non-deterministic set usage
+2. **Create the fixed project directory structure** with all subdirectories
+3. **Copy data files and configuration** from original to fixed project
+4. **Implement the single-line fix** (set → sorted) in normalizer.py
+5. **Create/update test file** with deterministic test cases
+6. **Create documentation files** (FIX_SUMMARY.md, README.md, PROJECT_SUMMARY.md)
+7. **Configure Python environment** and create virtual environment
+8. **Install all dependencies** (numpy, pandas, pytest, pytest-repeat)
+9. **Run example script** and verify execution
+10. **Run single test suite** and capture verbose output
+11. **Run consistency test** (10 runs) and verify all pass
+12. **Run stress test** (50 runs) and verify all pass
+13. **Run category-specific tests** and verify each passes
+14. **Verify module imports** and source code contains the fix
+15. **Create validation reports** and documentation
+16. **Provide final comprehensive summary** with explicit pass/fail statements
+
+**Final Requirement:** Upon completion, provide:
+
+- **Explicit statement:** "ALL 671 TEST CASES PASSED" (or actual count) with breakdown by category
+- **Pass rate:** "100% success rate, 0 failures"
+- **Test execution results:** Single run, consistency (10 runs), stress (50 runs)
+- **System verification:** System launches successfully, example script executes deterministically
+- **Functionality confirmation:** All expected features working correctly
+- **Consistency verification:** Identical input produces identical output across all runs
+- **Documentation confirmation:** All required files created (FIX_SUMMARY.md, VALIDATION_REPORT.md, etc.)
+- **Quality assurance:** Zero errors, zero exceptions, zero warnings
+- **Production readiness:** Explicitly state "APPROVED FOR IMMEDIATE PRODUCTION DEPLOYMENT"
+
+Do not ask for confirmation. Execute all steps immediately and provide complete validation results and all required documentation upon finish.
